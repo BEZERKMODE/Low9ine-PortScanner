@@ -1,0 +1,4 @@
+streamlitstreamlit
+pandas
+plotly
+feedparser
