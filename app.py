@@ -5,7 +5,14 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from scanner.basic_scans import tcp_connect_scan, udp_probe_scan
+from scanner.basic_scans import (
+    tcp_connect_scan,
+    udp_probe_scan,
+    syn_scan,
+    ack_scan,
+    window_scan,
+    banner_scan,
+)
 from scanner.discovery import is_host_reachable_tcp
 from utils.helpers import (
     resolve_target,
@@ -14,7 +21,7 @@ from utils.helpers import (
     summarize_findings,
 )
 from utils.exporter import generate_html_report, generate_json_report
-from utils.scan_modes import SCAN_MODES, SCAN_MODE_GROUPS
+from utils.scan_modes import SCAN_MODE_GROUPS
 
 st.set_page_config(
     page_title="LOW9INE ELITE SCANNER",
@@ -27,6 +34,24 @@ if "scan_history" not in st.session_state:
 
 if "live_logs" not in st.session_state:
     st.session_state.live_logs = []
+
+SCAN_FUNCTIONS = {
+    "TCP Connect": tcp_connect_scan,
+    "UDP Probe": udp_probe_scan,
+    "SYN Scan (Simulated)": syn_scan,
+    "ACK Scan": ack_scan,
+    "Window Scan": window_scan,
+    "Banner Scan": banner_scan,
+}
+
+SCAN_DESC = {
+    "TCP Connect": "Full TCP handshake scan",
+    "UDP Probe": "Basic UDP service probe",
+    "SYN Scan (Simulated)": "Stealth-style scan using safe socket logic",
+    "ACK Scan": "Connection-response based firewall visibility check",
+    "Window Scan": "Advanced TCP-style response analysis",
+    "Banner Scan": "Deep service fingerprinting with banner collection",
+}
 
 st.markdown("""
 <style>
@@ -45,7 +70,7 @@ html, body, [class*="css"] {
 }
 
 .block-container {
-    padding-top: 2.5rem !important;
+    padding-top: 2.2rem !important;
     padding-bottom: 2rem;
     max-width: 1500px;
 }
@@ -72,7 +97,7 @@ section[data-testid="stSidebar"] * {
         0 0 6px rgba(0,255,174,0.55),
         0 0 16px rgba(0,255,174,0.35),
         0 0 28px rgba(0,217,255,0.18);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.15rem;
     line-height: 1.1;
 }
 
@@ -88,7 +113,7 @@ section[data-testid="stSidebar"] * {
     border-radius: 999px;
     background: linear-gradient(90deg, #00ffae, #00d9ff, #00ffae);
     box-shadow: 0 0 14px rgba(0,255,174,0.45);
-    margin-bottom: 1.1rem;
+    margin-bottom: 1rem;
 }
 
 .badge-row {
@@ -138,7 +163,7 @@ section[data-testid="stSidebar"] * {
 
 .metric-value {
     color: #00ffae;
-    font-size: 1.85rem;
+    font-size: 1.8rem;
     font-weight: 900;
     text-shadow: 0 0 12px rgba(0,255,174,0.25);
 }
@@ -255,11 +280,6 @@ div[data-testid="stMetric"] {
 </style>
 """, unsafe_allow_html=True)
 
-SCAN_FUNCTIONS = {
-    "TCP Connect": tcp_connect_scan,
-    "UDP Probe": udp_probe_scan,
-}
-
 st.markdown('<div class="main-title">LOW9INE ELITE SCANNER</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="sub-title">Network Exposure • Offline Threat Intelligence • Live Recon Dashboard</div>',
@@ -269,12 +289,12 @@ st.markdown('<div class="neon-line"></div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div class="badge-row">
-    <div class="badge">LIVE ENUMERATION</div>
+    <div class="badge">LIVE PORT SCAN RESULTS</div>
     <div class="badge">TCP CONNECT</div>
     <div class="badge">UDP PROBE</div>
+    <div class="badge">PRESET SCAN MODES</div>
     <div class="badge">CVE / CVSS / MITRE</div>
-    <div class="badge">RECON / EXPOSURE / LATERAL LABELS</div>
-    <div class="badge">EXPORT READY</div>
+    <div class="badge">CSV / JSON / HTML EXPORT</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -285,8 +305,8 @@ st.markdown("""
         [ OK ] UI core loaded<br>
         [ OK ] Scan engine initialized<br>
         [ OK ] Offline threat intelligence ready<br>
-        [ OK ] CVSS mapping ready<br>
-        [ OK ] MITRE enrichment active<br>
+        [ OK ] Scan mode presets loaded<br>
+        [ OK ] MITRE ATT&CK mapping ready<br>
         [ OK ] Live terminal output active
     </div>
 </div>
@@ -300,13 +320,15 @@ with st.sidebar:
 
     target = st.text_input("Target IP / Domain", placeholder="example.com")
     scan_engine = st.selectbox("Scan Engine", list(SCAN_FUNCTIONS.keys()))
+    st.caption(SCAN_DESC.get(scan_engine, ""))
+
     timeout = st.number_input("Timeout", min_value=0.5, max_value=10.0, value=1.0, step=0.5)
     threads = st.slider("Threads", 10, 300, 100, 10)
 
-    if selected_mode["ports"]:
-        ports_input = st.text_input("Ports", value=selected_mode["ports"])
-    else:
-        ports_input = st.text_input("Ports", value="20-100")
+    ports_input = st.text_input(
+        "Ports",
+        value=selected_mode["ports"] if selected_mode["ports"] else "20-100"
+    )
 
     st.markdown(f"""
     <div class="mode-card">
@@ -350,7 +372,7 @@ if start_scan:
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(
-            f'<div class="metric-box"><div class="metric-label">TARGET</div><div class="metric-value" style="font-size:1.5rem;">{target_ip}</div></div>',
+            f'<div class="metric-box"><div class="metric-label">TARGET</div><div class="metric-value" style="font-size:1.45rem;">{target_ip}</div></div>',
             unsafe_allow_html=True
         )
     with c2:
@@ -360,12 +382,12 @@ if start_scan:
         )
     with c3:
         st.markdown(
-            f'<div class="metric-box"><div class="metric-label">DISCOVERY</div><div class="metric-value" style="font-size:1.3rem;">{discovery["method"]}</div></div>',
+            f'<div class="metric-box"><div class="metric-label">DISCOVERY</div><div class="metric-value" style="font-size:1.25rem;">{discovery["method"]}</div></div>',
             unsafe_allow_html=True
         )
     with c4:
         st.markdown(
-            f'<div class="metric-box"><div class="metric-label">MODE</div><div class="metric-value" style="font-size:1.2rem;">{mode_name}</div></div>',
+            f'<div class="metric-box"><div class="metric-label">ENGINE</div><div class="metric-value" style="font-size:1.05rem;">{scan_engine}</div></div>',
             unsafe_allow_html=True
         )
 
@@ -383,11 +405,12 @@ if start_scan:
         f"[INIT] Resolving target {target}",
         f"[INIT] Target IP => {target_ip}",
         f"[INIT] Selected mode => {mode_name}",
+        f"[INIT] Selected engine => {scan_engine}",
+        f"[INIT] Engine description => {SCAN_DESC.get(scan_engine, '')}",
         f"[INIT] Simulation label => {selected_mode['simulation']}",
         f"[INIT] Focus => {selected_mode['focus']}",
         f"[INIT] Total ports => {len(ports)}",
-        f"[INIT] Scan engine => {scan_engine}",
-        "[INIT] Threat enrichment => CVE / CVSS / MITRE online (offline database)",
+        "[INIT] Threat enrichment => CVE / CVSS / MITRE active",
         "[INIT] Starting live enumeration..."
     ]
     st.session_state.live_logs.extend(boot_lines)
@@ -427,8 +450,8 @@ if start_scan:
     duration = round(time.time() - start_time, 2)
     df = pd.DataFrame(results).sort_values("Port").reset_index(drop=True)
 
-    open_like_states = {"Open", "Responsive", "Open|Filtered"}
-    open_df = df[df["State"].isin(open_like_states)].copy()
+    interesting_states = {"Open", "Responsive", "Open|Filtered", "Unfiltered", "Open (Window)"}
+    open_df = df[df["State"].isin(interesting_states)].copy()
     critical_df = df[df["Risk"].isin(["Critical", "High"])].copy()
 
     st.markdown('<div class="section-title">SCAN SUMMARY</div>', unsafe_allow_html=True)
@@ -482,7 +505,7 @@ if start_scan:
             plot_bgcolor="rgba(0,0,0,0)",
             font_color="#d7ffe8"
         )
-        st.plotly_chart(fig_state, width="stretch")
+        st.plotly_chart(fig_state)
 
     with chart_col2:
         risk_df = df["Risk"].value_counts().reset_index()
@@ -499,7 +522,7 @@ if start_scan:
             plot_bgcolor="rgba(0,0,0,0)",
             font_color="#d7ffe8"
         )
-        st.plotly_chart(fig_risk, width="stretch")
+        st.plotly_chart(fig_risk)
 
     st.markdown('<div class="section-title">VULNERABILITY INTELLIGENCE</div>', unsafe_allow_html=True)
     displayed = False

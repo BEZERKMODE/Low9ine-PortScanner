@@ -131,3 +131,114 @@ def udp_probe_scan(ip, port, timeout=2.0, requested_scan="UDP Probe"):
         )
     finally:
         sock.close()
+
+
+def syn_scan(ip, port, timeout=1.0, requested_scan="SYN Scan (Simulated)"):
+    result = tcp_connect_scan(ip, port, timeout, requested_scan=requested_scan)
+    if result["State"] == "Open":
+        result["Scan"] = "SYN Scan (Simulated)"
+    return result
+
+
+def ack_scan(ip, port, timeout=1.0, requested_scan="ACK Scan"):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+
+    try:
+        result = sock.connect_ex((ip, port))
+        service = get_service_name(port)
+
+        if result == 0:
+            intelligence = enrich_finding(
+                port=port,
+                protocol="TCP",
+                service=service,
+                state="Unfiltered",
+                banner=""
+            )
+            return make_result(
+                port=port,
+                protocol="TCP",
+                scan=requested_scan,
+                state="Unfiltered",
+                banner="",
+                risk=intelligence["risk"],
+                cvss=intelligence["cvss"],
+                threats=intelligence["threats"],
+                mitre=intelligence["mitre"],
+                simulation=intelligence["simulation"],
+                focus=intelligence["focus"],
+            )
+
+        return make_result(
+            port=port,
+            protocol="TCP",
+            scan=requested_scan,
+            state="Filtered",
+        )
+
+    except Exception:
+        return make_result(
+            port=port,
+            protocol="TCP",
+            scan=requested_scan,
+            state="Filtered",
+        )
+    finally:
+        sock.close()
+
+
+def window_scan(ip, port, timeout=1.0, requested_scan="Window Scan"):
+    result = tcp_connect_scan(ip, port, timeout, requested_scan=requested_scan)
+    if result["State"] == "Open":
+        result["State"] = "Open (Window)"
+        result["Scan"] = "Window Scan"
+    return result
+
+
+def banner_scan(ip, port, timeout=1.0, requested_scan="Banner Scan"):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(timeout)
+
+    try:
+        result = sock.connect_ex((ip, port))
+        service = get_service_name(port)
+
+        if result == 0:
+            banner = grab_banner(ip, port, timeout)
+            intelligence = enrich_finding(
+                port=port,
+                protocol="TCP",
+                service=service,
+                state="Open",
+                banner=banner
+            )
+            return make_result(
+                port=port,
+                protocol="TCP",
+                scan=requested_scan,
+                state="Open",
+                banner=banner,
+                risk=intelligence["risk"],
+                cvss=intelligence["cvss"],
+                threats=intelligence["threats"],
+                mitre=intelligence["mitre"],
+                simulation=intelligence["simulation"],
+                focus=intelligence["focus"],
+            )
+
+        return make_result(
+            port=port,
+            protocol="TCP",
+            scan=requested_scan,
+            state="Closed",
+        )
+    except Exception:
+        return make_result(
+            port=port,
+            protocol="TCP",
+            scan=requested_scan,
+            state="Filtered",
+        )
+    finally:
+        sock.close()

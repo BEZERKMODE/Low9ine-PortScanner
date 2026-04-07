@@ -19,7 +19,7 @@ SCAN_MODES = {
     },
     "Full Scan (1-65535)": {
         "ports": "1-65535",
-        "description": "Complete sweep of all TCP/UDP port numbers.",
+        "description": "Complete sweep of all port numbers.",
         "simulation": "Recon",
         "focus": "Maximum Coverage",
     },
@@ -77,12 +77,6 @@ SCAN_MODES = {
         "simulation": "Exploit Exposure",
         "focus": "High Severity Services",
     },
-    "Dev / Debug Ports": {
-        "ports": "3000,5000,7000,7001,8000,8001,9000,8888",
-        "description": "Developer apps, dashboards, notebooks, and test services.",
-        "simulation": "Recon",
-        "focus": "Dev Exposure",
-    },
     "Docker / Kubernetes": {
         "ports": "2375,2376,6443,10250",
         "description": "Container and orchestration plane exposure checks.",
@@ -94,12 +88,6 @@ SCAN_MODES = {
         "description": "Common smart-device, MQTT, and CoAP surfaces.",
         "simulation": "Exploit Exposure",
         "focus": "Embedded Exposure",
-    },
-    "Identity & Directory": {
-        "ports": "53,88,135,389,445,636,3268,3269",
-        "description": "Directory and enterprise identity visibility sweep.",
-        "simulation": "Recon",
-        "focus": "Identity Discovery",
     },
     "Custom": {
         "ports": "",
@@ -120,14 +108,12 @@ SCAN_MODE_GROUPS = {
     "Web & App": {
         "Web Scan": SCAN_MODES["Web Scan"],
         "Web Extended": SCAN_MODES["Web Extended"],
-        "Dev / Debug Ports": SCAN_MODES["Dev / Debug Ports"],
     },
     "Infrastructure": {
         "Windows Audit": SCAN_MODES["Windows Audit"],
         "Linux Audit": SCAN_MODES["Linux Audit"],
         "Network Devices": SCAN_MODES["Network Devices"],
         "Docker / Kubernetes": SCAN_MODES["Docker / Kubernetes"],
-        "Identity & Directory": SCAN_MODES["Identity & Directory"],
     },
     "Data & Access": {
         "Database Scan": SCAN_MODES["Database Scan"],

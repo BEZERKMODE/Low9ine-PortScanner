@@ -6,7 +6,7 @@ def normalize_service(service: str) -> str:
 
 
 def calculate_risk_label(cvss: float, state: str) -> str:
-    if state not in {"Open", "Responsive", "Open|Filtered"}:
+    if state not in {"Open", "Responsive", "Open|Filtered", "Unfiltered", "Open (Window)"}:
         return "Low"
 
     if cvss >= 9.0:

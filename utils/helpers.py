@@ -141,7 +141,7 @@ def summarize_findings(df):
     if df.empty:
         return "No results were produced."
 
-    open_like = df[df["State"].isin(["Open", "Responsive", "Open|Filtered"])]
+    open_like = df[df["State"].isin(["Open", "Responsive", "Open|Filtered", "Unfiltered", "Open (Window)"])]
     critical = df[df["Risk"] == "Critical"]
     high = df[df["Risk"] == "High"]
 
