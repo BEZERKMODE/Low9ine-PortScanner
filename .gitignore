@@ -1,7 +1,11 @@
-.venv/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.log
-report.html
+.venv/
+venv/
+.env
+.streamlit/secrets.toml
+scan_report.html
+scan_report.csv
+scan_report.json

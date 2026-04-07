@@ -1,5 +1,5 @@
-import socket
 import ipaddress
+import socket
 
 COMMON_PORTS = {
     20: "FTP-DATA",
@@ -36,17 +36,29 @@ COMMON_PORTS = {
     1433: "MSSQL",
     1521: "ORACLE",
     1723: "PPTP",
+    1883: "MQTT",
     2049: "NFS",
+    2375: "DOCKER",
+    2376: "DOCKER-TLS",
     3306: "MYSQL",
     3389: "RDP",
+    5000: "DEV-SERVER",
     5432: "POSTGRESQL",
+    5683: "COAP",
     5900: "VNC",
+    5985: "WINRM-HTTP",
+    5986: "WINRM-HTTPS",
     6379: "REDIS",
+    6443: "KUBERNETES-API",
+    8000: "HTTP-ALT",
+    8001: "HTTP-ALT",
     8080: "HTTP-ALT",
     8443: "HTTPS-ALT",
+    8888: "HTTP-ALT",
+    9000: "HTTP-ALT",
+    10250: "KUBELET",
+    27017: "MONGODB",
 }
-
-HIGH_RISK_PORTS = {21, 23, 135, 137, 138, 139, 445, 1433, 1521, 3306, 3389, 5432, 5900, 6379}
 
 
 def resolve_target(target: str):
@@ -79,6 +91,8 @@ def parse_ports(port_text: str):
             start, end = chunk.split("-")
             start = int(start.strip())
             end = int(end.strip())
+            if start > end:
+                start, end = end, start
             for p in range(start, end + 1):
                 if 1 <= p <= 65535:
                     ports.add(p)
@@ -94,21 +108,54 @@ def get_service_name(port: int) -> str:
     return COMMON_PORTS.get(port, "Unknown")
 
 
-def get_risk_level(port: int) -> str:
-    if port in HIGH_RISK_PORTS:
-        return "High"
-    elif port in {22, 25, 53, 80, 110, 143, 443, 993, 995}:
-        return "Medium"
-    return "Low"
-
-
-def make_result(port, protocol, scan_type, state, banner=""):
+def make_result(
+    port,
+    protocol,
+    scan,
+    state,
+    banner="",
+    risk="Low",
+    cvss=0.0,
+    threats=None,
+    mitre=None,
+    simulation="Recon",
+    focus="General Exposure",
+):
     return {
         "Port": port,
         "Protocol": protocol,
-        "Scan Type": scan_type,
+        "Scan": scan,
         "State": state,
         "Service": get_service_name(port),
-        "Risk": get_risk_level(port),
+        "Risk": risk,
+        "CVSS": cvss,
+        "Simulation": simulation,
+        "Focus": focus,
+        "Threats": threats or [],
+        "MITRE": mitre or [],
         "Banner": banner,
     }
+
+
+def summarize_findings(df):
+    if df.empty:
+        return "No results were produced."
+
+    open_like = df[df["State"].isin(["Open", "Responsive", "Open|Filtered"])]
+    critical = df[df["Risk"] == "Critical"]
+    high = df[df["Risk"] == "High"]
+
+    top_services = (
+        open_like["Service"].value_counts().head(5).to_dict()
+        if not open_like.empty else {}
+    )
+
+    if not open_like.empty:
+        services_text = ", ".join([f"{k}={v}" for k, v in top_services.items()])
+        return (
+            f"Live enumeration completed. Open or interesting findings: {len(open_like)}. "
+            f"High severity findings: {len(high)}. Critical findings: {len(critical)}. "
+            f"Most observed exposed services: {services_text if services_text else 'none'}."
+        )
+
+    return "Enumeration completed. No open or interesting ports were identified in the selected range."

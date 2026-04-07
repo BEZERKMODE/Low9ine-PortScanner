@@ -1,30 +1,43 @@
-def generate_html_report(df, target, target_ip, scan_type, duration):
+import json
+import html
+
+
+def generate_json_report(results):
+    return json.dumps(results, indent=2)
+
+
+def generate_html_report(df, target, ip, mode_name, engine, duration):
     rows = []
 
     for _, row in df.iterrows():
-        risk_class = str(row["Risk"]).lower()
-        state_class = str(row["State"]).lower().replace("|", "-").replace(" ", "-")
+        threats = "<br>".join([html.escape(str(x)) for x in row["Threats"]]) if row["Threats"] else ""
+        mitre = "<br>".join([html.escape(str(x)) for x in row["MITRE"]]) if row["MITRE"] else ""
 
         rows.append(f"""
-        <tr class="{risk_class}">
+        <tr class="{str(row["Risk"]).lower()}">
             <td>{row["Port"]}</td>
-            <td>{row["Protocol"]}</td>
-            <td>{row["Scan Type"]}</td>
-            <td>{row["State"]}</td>
-            <td>{row["Service"]}</td>
-            <td>{row["Risk"]}</td>
-            <td>{row["Banner"]}</td>
+            <td>{html.escape(str(row["Protocol"]))}</td>
+            <td>{html.escape(str(row["Scan"]))}</td>
+            <td>{html.escape(str(row["State"]))}</td>
+            <td>{html.escape(str(row["Service"]))}</td>
+            <td>{html.escape(str(row["Risk"]))}</td>
+            <td>{html.escape(str(row["CVSS"]))}</td>
+            <td>{html.escape(str(row["Simulation"]))}</td>
+            <td>{html.escape(str(row["Focus"]))}</td>
+            <td>{html.escape(str(row["Banner"]))}</td>
+            <td>{threats}</td>
+            <td>{mitre}</td>
         </tr>
         """)
 
     rows_html = "\n".join(rows)
 
-    html = f"""
+    html_report = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <meta charset="utf-8">
-        <title>Low9ine Scan Report</title>
+        <meta charset="utf-8"/>
+        <title>Low9ine Elite Report</title>
         <style>
             body {{
                 background: #05070d;
@@ -35,7 +48,7 @@ def generate_html_report(df, target, target_ip, scan_type, duration):
             h1 {{
                 color: #00ffae;
             }}
-            .meta {{
+            .panel {{
                 background: #0b1220;
                 border: 1px solid rgba(0,255,174,0.18);
                 border-radius: 16px;
@@ -46,22 +59,26 @@ def generate_html_report(df, target, target_ip, scan_type, duration):
                 width: 100%;
                 border-collapse: collapse;
                 background: #09111d;
+                font-size: 12px;
             }}
             th, td {{
                 border: 1px solid #1f334a;
-                padding: 10px;
-                text-align: center;
-                font-size: 13px;
+                padding: 8px;
+                text-align: left;
+                vertical-align: top;
             }}
             th {{
                 background: #101b2f;
                 color: #00e7ff;
             }}
+            tr.critical {{
+                background: rgba(255, 0, 0, 0.18);
+            }}
             tr.high {{
-                background: rgba(255, 0, 0, 0.10);
+                background: rgba(255, 120, 0, 0.12);
             }}
             tr.medium {{
-                background: rgba(255, 165, 0, 0.08);
+                background: rgba(255, 200, 0, 0.08);
             }}
             tr.low {{
                 background: rgba(0, 255, 174, 0.05);
@@ -69,14 +86,15 @@ def generate_html_report(df, target, target_ip, scan_type, duration):
         </style>
     </head>
     <body>
-        <h1>LOW9INE ELITE PORT SCANNER REPORT</h1>
+        <h1>LOW9INE ELITE SCANNER REPORT</h1>
 
-        <div class="meta">
-            <p><strong>Target:</strong> {target}</p>
-            <p><strong>Resolved IP:</strong> {target_ip}</p>
-            <p><strong>Scan Type:</strong> {scan_type}</p>
-            <p><strong>Duration:</strong> {duration} seconds</p>
-            <p><strong>Total Results:</strong> {len(df)}</p>
+        <div class="panel">
+            <p><strong>Target:</strong> {html.escape(str(target))}</p>
+            <p><strong>Resolved IP:</strong> {html.escape(str(ip))}</p>
+            <p><strong>Mode:</strong> {html.escape(str(mode_name))}</p>
+            <p><strong>Engine:</strong> {html.escape(str(engine))}</p>
+            <p><strong>Duration:</strong> {html.escape(str(duration))} seconds</p>
+            <p><strong>Total Findings:</strong> {len(df)}</p>
         </div>
 
         <table>
@@ -84,11 +102,16 @@ def generate_html_report(df, target, target_ip, scan_type, duration):
                 <tr>
                     <th>Port</th>
                     <th>Protocol</th>
-                    <th>Scan Type</th>
+                    <th>Scan</th>
                     <th>State</th>
                     <th>Service</th>
                     <th>Risk</th>
+                    <th>CVSS</th>
+                    <th>Simulation</th>
+                    <th>Focus</th>
                     <th>Banner</th>
+                    <th>Threats</th>
+                    <th>MITRE</th>
                 </tr>
             </thead>
             <tbody>
@@ -98,4 +121,4 @@ def generate_html_report(df, target, target_ip, scan_type, duration):
     </body>
     </html>
     """
-    return html
+    return html_report
