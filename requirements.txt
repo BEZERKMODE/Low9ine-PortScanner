@@ -2,3 +2,5 @@ streamlitstreamlit
 pandas
 plotly
 feedparser
+streamlit
+scapy
