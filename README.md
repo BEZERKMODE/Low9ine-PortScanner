@@ -1,99 +1,88 @@
-# ⚡ LOW9INE ELITE SCANNER
+# LOW9INE ELITE SCANNER
 
-### 🚀 Network Exposure & Threat Intelligence Platform
-
----
-
-## 🧠 Overview
-
-**LOW9INE ELITE SCANNER** is an advanced cybersecurity tool designed to perform **real-time network scanning, service enumeration, and offline vulnerability intelligence analysis**.
-
-It goes beyond traditional port scanners by combining:
-
-* ⚡ High-speed concurrent scanning
-* 🧠 Offline CVE + CVSS risk intelligence
-* 🛰️ MITRE ATT&CK mapping
-* 🎯 Attack simulation context (Recon, Exploit Exposure, Lateral Movement)
-* 📊 Interactive dashboards & live terminal output
+Network Exposure • Threat Intelligence • Live Recon Dashboard
 
 ---
 
-## 🔥 Key Features
+## Overview
 
-### ⚡ Real-Time Scanning Engine
+Low9ine Elite Scanner is a Python-based network scanning and threat analysis tool designed to simulate real-world penetration testing workflows.
 
-* Multi-threaded TCP Connect scanning
-* UDP probing support
-* Live results streaming (table + terminal)
+It combines high-speed port scanning with offline threat intelligence, CVSS scoring, and MITRE ATT&CK mapping to provide meaningful security insights beyond basic enumeration.
 
 ---
 
-### 🧠 Offline Threat Intelligence
+## Key Features
 
-* Built-in CVE knowledge base
-* CVSS-based risk scoring
-* No external API dependency (fully offline capable)
+### Multi-Engine Scan System
 
----
+Supports multiple scan techniques:
 
-### 🎯 Attack Simulation Context
-
-Each finding is mapped to real-world attacker behavior:
-
-| Label               | Meaning                     |
-| ------------------- | --------------------------- |
-| 🛰️ Recon           | Information gathering phase |
-| 💥 Exploit Exposure | Vulnerable service exposure |
-| 🔄 Lateral Movement | Internal network pivoting   |
+* TCP Connect Scan
+* UDP Probe Scan
+* SYN Scan (simulated)
+* ACK Scan
+* Window Scan
+* Banner Grabbing Scan
 
 ---
 
-### 🧬 MITRE ATT&CK Mapping
+### Advanced Scan Modes (Preset-Based)
 
-* Automatic mapping of services to MITRE techniques
-* Helps understand real-world attack paths
-
----
-
-### 📡 Advanced Scan Modes
-
-Includes professional presets inspired by industry tools:
+Organized scan presets inspired by professional tools:
 
 * Quick Scan
-* Top 100 / 1000 Ports
+* Top 100 / Top 1000 Ports
 * Full Scan (1–65535)
-* Web / Web Extended
-* Database Scan
+* Web Scan / Web Extended
 * Windows / Linux Audit
+* Database Scan
 * High Risk Ports
 * Docker / Kubernetes
 * IoT Scan
 * Remote Access
-* Custom Modes
+* Custom Mode
 
 ---
 
-### 💀 Elite Hacker UI
+### Threat Intelligence (Offline)
 
-* Dark cyberpunk interface
-* Neon styling
-* Live terminal logs
-* Animated scanning feedback
+* CVE-style vulnerability insights
+* CVSS-based risk scoring
+* MITRE ATT&CK technique mapping
+* Attack simulation labels:
 
----
-
-### 📊 Visualization & Reporting
-
-* Real-time charts (State + Risk distribution)
-* Export options:
-
-  * CSV
-  * JSON
-  * HTML pentest report
+  * Recon
+  * Exploit Exposure
+  * Lateral Movement
 
 ---
 
-## 🏗️ Project Structure
+### Live Dashboard
+
+* Real-time scan results
+* Live terminal-style logs
+* Progress tracking
+* Interactive tables
+
+---
+
+### Visualization
+
+* State distribution (Open / Closed / Filtered)
+* Risk distribution (Low / Medium / High / Critical)
+
+---
+
+### Export Options
+
+* CSV report
+* JSON report
+* HTML pentest report
+
+---
+
+## Project Structure
 
 ```
 Low9ine-PortScanner/
@@ -118,105 +107,85 @@ Low9ine-PortScanner/
 
 ---
 
-## 🚀 Getting Started
-
-### 1️⃣ Clone Repository
+## Installation
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/Low9ine-PortScanner.git
 cd Low9ine-PortScanner
-```
-
----
-
-### 2️⃣ Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-### 3️⃣ Run Application
+## Usage
 
 ```bash
 streamlit run app.py
 ```
 
----
+Open in browser:
 
-## 🎯 Example Use Cases
-
-* 🔍 Network reconnaissance
-* 🛡️ Vulnerability assessment (basic)
-* 🧪 Cybersecurity learning labs
-* 🏢 Internal network auditing
-* 💼 Portfolio / internship projects
+```
+http://localhost:8501
+```
 
 ---
 
-## 🧪 Sample Output
+## Example Workflow
 
-* Live port scan results
-* CVE-based risk insights
-* MITRE ATT&CK techniques
-* Attack simulation labels
-* Interactive dashboard
-
----
-
-## ⚠️ Disclaimer
-
-This tool is intended for:
-
-* Educational purposes
-* Authorized security testing only
-
-❌ Do NOT use on networks without permission
+1. Select Mode Category and Scan Mode
+2. Enter target (IP or domain)
+3. Choose scan engine
+4. Start scan
+5. Monitor live results and logs
+6. Export report
 
 ---
 
-## 🧠 Learning Outcomes
+## Learning Outcomes
 
-Through this project, I developed:
-
-* Network scanning & socket programming
-* Asynchronous & concurrent execution
-* Cyber threat modeling (CVE, CVSS, MITRE)
-* Secure software design
-* Real-world cybersecurity tool development
-
----
-
-## 💼 Why This Project Stands Out
-
-Unlike basic port scanners, this project:
-
-* Integrates **threat intelligence with scanning**
-* Provides **context-aware security insights**
-* Simulates **real attacker behavior models**
-* Uses **clean modular architecture**
-* Delivers **professional UI + reporting**
+* Network scanning fundamentals
+* Socket programming in Python
+* Concurrent execution (threading)
+* Service detection and banner grabbing
+* Risk scoring and threat modeling
+* Building real-world cybersecurity tools
 
 ---
 
-## 📌 Future Improvements
+## Use Cases
 
+* Network reconnaissance
+* Security auditing (basic level)
+* Cybersecurity learning projects
+* Portfolio demonstration
+
+---
+
+## Disclaimer
+
+This tool is intended for educational purposes and authorized testing only.
+Do not use it on systems without permission.
+
+---
+
+## Author
+
+Suraj Bartwal
+B.Tech Computer Science (Cybersecurity)
+
+---
+
+## Future Improvements
+
+* Real SYN scan using raw packets
+* OS fingerprinting
 * AI-based anomaly detection
-* Full SOC dashboard
-* Authentication system
+* SIEM / SOC dashboard integration
 * Cloud deployment
-* Integration with SIEM tools
 
 ---
 
-## 👨‍💻 Author
+## License
 
-**Suraj Bartwal**
-Cybersecurity Enthusiast | B.Tech CSE (Cybersecurity)
-
----
-
-## ⭐ If you like this project
-
-Give it a ⭐ on GitHub and share it 🚀
+This project is for educational use.
