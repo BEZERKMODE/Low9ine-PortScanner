@@ -23,18 +23,27 @@ from utils.helpers import (
 from utils.exporter import generate_html_report, generate_json_report
 from utils.scan_modes import SCAN_MODE_GROUPS
 
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 st.set_page_config(
     page_title="LOW9INE ELITE SCANNER",
     page_icon=None,
     layout="wide",
 )
 
+# =========================================================
+# SESSION STATE
+# =========================================================
 if "scan_history" not in st.session_state:
     st.session_state.scan_history = []
 
 if "live_logs" not in st.session_state:
     st.session_state.live_logs = []
 
+# =========================================================
+# SCAN ENGINES
+# =========================================================
 SCAN_FUNCTIONS = {
     "TCP Connect": tcp_connect_scan,
     "UDP Probe": udp_probe_scan,
@@ -53,6 +62,9 @@ SCAN_DESC = {
     "Banner Scan": "Deep service fingerprinting with banner collection",
 }
 
+# =========================================================
+# UI STYLE
+# =========================================================
 st.markdown("""
 <style>
 html, body, [class*="css"] {
@@ -280,6 +292,9 @@ div[data-testid="stMetric"] {
 </style>
 """, unsafe_allow_html=True)
 
+# =========================================================
+# HEADER
+# =========================================================
 st.markdown('<div class="main-title">LOW9INE ELITE SCANNER</div>', unsafe_allow_html=True)
 st.markdown(
     '<div class="sub-title">Network Exposure • Offline Threat Intelligence • Live Recon Dashboard</div>',
@@ -292,8 +307,8 @@ st.markdown("""
     <div class="badge">LIVE PORT SCAN RESULTS</div>
     <div class="badge">TCP CONNECT</div>
     <div class="badge">UDP PROBE</div>
-    <div class="badge">PRESET SCAN MODES</div>
-    <div class="badge">CVE / CVSS / MITRE</div>
+    <div class="badge">SIMULATED SYN / ACK / WINDOW</div>
+    <div class="badge">BANNER FINGERPRINTING</div>
     <div class="badge">CSV / JSON / HTML EXPORT</div>
 </div>
 """, unsafe_allow_html=True)
@@ -303,15 +318,17 @@ st.markdown("""
     <div style="color:#00ffae; font-weight:800; margin-bottom:8px;">SYSTEM STATUS</div>
     <div style="color:#9ed6c3; line-height:1.7;">
         [ OK ] UI core loaded<br>
-        [ OK ] Scan engine initialized<br>
-        [ OK ] Offline threat intelligence ready<br>
-        [ OK ] Scan mode presets loaded<br>
-        [ OK ] MITRE ATT&CK mapping ready<br>
-        [ OK ] Live terminal output active
+        [ OK ] Multi-engine scanner ready<br>
+        [ OK ] Live batch scanning fix active<br>
+        [ OK ] Full-range scanning optimization enabled<br>
+        [ OK ] Threat enrichment active
     </div>
 </div>
 """, unsafe_allow_html=True)
 
+# =========================================================
+# SIDEBAR
+# =========================================================
 with st.sidebar:
     st.markdown("## ⚙️ Scan Configuration")
     mode_group = st.selectbox("Mode Category", list(SCAN_MODE_GROUPS.keys()))
@@ -322,13 +339,14 @@ with st.sidebar:
     scan_engine = st.selectbox("Scan Engine", list(SCAN_FUNCTIONS.keys()))
     st.caption(SCAN_DESC.get(scan_engine, ""))
 
-    timeout = st.number_input("Timeout", min_value=0.5, max_value=10.0, value=1.0, step=0.5)
-    threads = st.slider("Threads", 10, 300, 100, 10)
-
     ports_input = st.text_input(
         "Ports",
         value=selected_mode["ports"] if selected_mode["ports"] else "20-100"
     )
+
+    timeout = st.number_input("Timeout", min_value=0.5, max_value=10.0, value=1.5, step=0.5)
+    threads = st.slider("Threads", 10, 200, 80, 10)
+    batch_size = st.selectbox("Batch Size", [100, 250, 500, 1000], index=2)
 
     st.markdown(f"""
     <div class="mode-card">
@@ -341,10 +359,24 @@ with st.sidebar:
 
     start_scan = st.button("🚀 START ELITE SCAN")
 
+# =========================================================
+# HELPERS
+# =========================================================
 def run_single_scan(target_ip, port, scan_type, timeout):
     scan_func = SCAN_FUNCTIONS[scan_type]
     return scan_func(target_ip, port, timeout, requested_scan=scan_type)
 
+
+def update_terminal(logs_box, logs):
+    logs_box.markdown(
+        '<div class="terminal-box">' + "<br>".join(logs[-18:]) + '</div>',
+        unsafe_allow_html=True
+    )
+
+
+# =========================================================
+# SCAN RUNNER
+# =========================================================
 if start_scan:
     st.session_state.live_logs = []
 
@@ -365,6 +397,11 @@ if start_scan:
     except Exception:
         st.error("Invalid port format. Example: 22,80,443 or 1-1024")
         st.stop()
+
+    # Safe auto-fix for huge scans
+    if len(ports) > 5000:
+        threads = min(threads, 50)
+        batch_size = min(batch_size, 500)
 
     discovery = is_host_reachable_tcp(target_ip, timeout=1.0)
 
@@ -387,7 +424,7 @@ if start_scan:
         )
     with c4:
         st.markdown(
-            f'<div class="metric-box"><div class="metric-label">ENGINE</div><div class="metric-value" style="font-size:1.05rem;">{scan_engine}</div></div>',
+            f'<div class="metric-box"><div class="metric-label">ENGINE</div><div class="metric-value" style="font-size:1.0rem;">{scan_engine}</div></div>',
             unsafe_allow_html=True
         )
 
@@ -397,55 +434,75 @@ if start_scan:
     live_table = left_col.empty()
     terminal_box = right_col.empty()
     progress_bar = st.progress(0)
+    status_box = st.empty()
 
     results = []
     start_time = time.time()
 
     boot_lines = [
-        f"[INIT] Resolving target {target}",
-        f"[INIT] Target IP => {target_ip}",
-        f"[INIT] Selected mode => {mode_name}",
-        f"[INIT] Selected engine => {scan_engine}",
-        f"[INIT] Engine description => {SCAN_DESC.get(scan_engine, '')}",
-        f"[INIT] Simulation label => {selected_mode['simulation']}",
-        f"[INIT] Focus => {selected_mode['focus']}",
-        f"[INIT] Total ports => {len(ports)}",
-        "[INIT] Threat enrichment => CVE / CVSS / MITRE active",
-        "[INIT] Starting live enumeration..."
+        f"[INIT] Target => {target}",
+        f"[INIT] Resolved IP => {target_ip}",
+        f"[INIT] Mode => {mode_name}",
+        f"[INIT] Engine => {scan_engine}",
+        f"[INIT] Ports => {len(ports)}",
+        f"[INIT] Threads => {threads}",
+        f"[INIT] Batch Size => {batch_size}",
+        "[INIT] Starting batch-based scan..."
     ]
     st.session_state.live_logs.extend(boot_lines)
+    update_terminal(terminal_box, st.session_state.live_logs)
 
-    terminal_box.markdown(
-        '<div class="terminal-box">' + "<br>".join(st.session_state.live_logs[-18:]) + '</div>',
-        unsafe_allow_html=True
-    )
+    total_ports = len(ports)
+    processed_ports = 0
 
-    with ThreadPoolExecutor(max_workers=threads) as executor:
-        future_map = {
-            executor.submit(run_single_scan, target_ip, port, scan_engine, timeout): port
-            for port in ports
-        }
+    for batch_start in range(0, total_ports, batch_size):
+        batch_ports = ports[batch_start:batch_start + batch_size]
 
-        for i, future in enumerate(as_completed(future_map)):
-            result = future.result()
-            results.append(result)
+        status_box.info(
+            f"Scanning batch {batch_start + 1}-{batch_start + len(batch_ports)} of {total_ports} ports"
+        )
 
-            log_line = (
-                f"[{result['State']}] "
-                f"Port {result['Port']}/{result['Protocol']} "
-                f"=> {result['Service']} | Risk={result['Risk']} | CVSS={result['CVSS']}"
-            )
-            st.session_state.live_logs.append(log_line)
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            future_map = {
+                executor.submit(run_single_scan, target_ip, port, scan_engine, timeout): port
+                for port in batch_ports
+            }
 
-            temp_df = pd.DataFrame(results).sort_values("Port")
-            live_table.dataframe(temp_df, width="stretch")
+            for future in as_completed(future_map):
+                try:
+                    result = future.result()
+                except Exception as e:
+                    port = future_map[future]
+                    result = {
+                        "Port": port,
+                        "Protocol": "TCP",
+                        "Scan": scan_engine,
+                        "State": "Error",
+                        "Service": "Unknown",
+                        "Risk": "Low",
+                        "CVSS": 0.0,
+                        "Simulation": "Recon",
+                        "Focus": "General Exposure",
+                        "Threats": [],
+                        "MITRE": [],
+                        "Banner": str(e),
+                    }
 
-            terminal_box.markdown(
-                '<div class="terminal-box">' + "<br>".join(st.session_state.live_logs[-18:]) + '</div>',
-                unsafe_allow_html=True
-            )
+                results.append(result)
+                processed_ports += 1
 
-            progress_bar.progress((i + 1) / len(ports))
+        # UI update only after each batch
+        temp_df = pd.DataFrame(results).sort_values("Port")
+        live_table.dataframe(temp_df, width="stretch")
+
+        open_like = len(temp_df[temp_df["State"].isin(["Open", "Responsive", "Open|Filtered", "Unfiltered", "Open (Window)"])])
+        st.session_state.live_logs.append(
+            f"[BATCH DONE] {batch_start + 1}-{batch_start + len(batch_ports)} | "
+            f"Processed={processed_ports}/{total_ports} | Findings={open_like}"
+        )
+        update_terminal(terminal_box, st.session_state.live_logs)
+
+        progress_bar.progress(processed_ports / total_ports)
 
     duration = round(time.time() - start_time, 2)
     df = pd.DataFrame(results).sort_values("Port").reset_index(drop=True)
@@ -576,6 +633,6 @@ if st.session_state.scan_history:
     st.dataframe(history_df, width="stretch")
 
 st.markdown(
-    '<div class="small-note">LOW9INE ELITE SCANNER • Authorized network auditing only • Offline enrichment database enabled</div>',
+    '<div class="small-note">LOW9INE ELITE SCANNER • Authorized network auditing only • Batch scanning fix for large ranges enabled</div>',
     unsafe_allow_html=True
 )
