@@ -1,1 +1,1 @@
-# intelligence package
+# Intelligence package

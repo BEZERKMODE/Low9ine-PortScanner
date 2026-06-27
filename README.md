@@ -16,6 +16,13 @@ It combines high-speed port scanning with offline threat intelligence, CVSS scor
 
 ---
 
+## Demo
+
+![Demo Screenshot](docs/screenshot.png)
+<!-- Replace with actual screenshot or GIF of the running Streamlit dashboard -->
+
+---
+
 ## Key Features
 
 ### Multi-Engine Scan System
