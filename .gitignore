@@ -9,3 +9,6 @@ venv/
 scan_report.html
 scan_report.csv
 scan_report.json
+*.code-workspace
+report.html
+Reports/
