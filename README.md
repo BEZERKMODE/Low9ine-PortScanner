@@ -1,5 +1,9 @@
 # LOW9INE ELITE SCANNER
 
+![Python](https://img.shields.io/badge/python-3.8+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-Streamlit-red)
+
 Network Exposure • Threat Intelligence • Live Recon Dashboard
 
 ---
@@ -110,7 +114,7 @@ Low9ine-PortScanner/
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Low9ine-PortScanner.git
+git clone https://github.com/BEZERKMODE/Low9ine-PortScanner.git
 cd Low9ine-PortScanner
 pip install -r requirements.txt
 ```
@@ -188,4 +192,4 @@ B.Tech Computer Science (Cybersecurity)
 
 ## License
 
-This project is for educational use.
+MIT License - See LICENSE file for details.
